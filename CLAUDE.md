@@ -6,6 +6,15 @@ See `README.md` for setup, commands and services. Do not duplicate them here.
 - Run PHP, Composer and Artisan only inside the container: `docker compose exec backend ...`. Do not install PHP on the host.
 - Secrets live only in `.env` files (git-ignored). Commit `.env.example` with demo values.
 - Synchronization errors are simulated deterministically. Never use randomness in sync logic or tests.
-- Tests must run against `merchantops_test`, never the main database.
-- Documentation and code comments are written in English.
+- Tests must run against test database, never the main database.
 - Do not commit without showing the file list to the user first.
+- Change only files relevant to the approved task.
+- Do not refactor unrelated code without asking.
+- After implementation, run relevant tests and summarize changed files, test results, and known limitations.
+
+## Language
+
+- Communicate with the user in Russian.
+- Write plans, explanations, and review summaries in Russian.
+- Keep code, code comments, documentation, and Git commit messages in English.
+- Do not translate technical identifiers or commands.
