@@ -20,10 +20,10 @@ Check:
 
 ```sh
 curl http://localhost:8000/api/health
-# {"status":"ok","database":"ok"}
+# {"status":"ok","database":"ok","timestamp":"2026-01-01T12:00:00+00:00"}
 ```
 
-If the database is unreachable, the endpoint returns `503` with `{"status":"error","database":"unavailable"}`.
+`timestamp` is the current server time in ISO 8601. If the database is unreachable, the endpoint returns `503` with `{"status":"error","database":"unavailable","timestamp":"..."}`.
 
 ## Tests
 
