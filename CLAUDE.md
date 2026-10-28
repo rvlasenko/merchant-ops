@@ -10,6 +10,7 @@ See `README.md` for setup, commands and services. Do not duplicate them here.
 - Do not commit without showing the file list to the user first.
 - Change only files relevant to the approved task.
 - Do not refactor unrelated code without asking.
+- When functionality changes, check which related documents (`README.md`, `docs/specs/`) need updating and list them in the summary. Do not rewrite them automatically unless necessary.
 - After implementation, run relevant tests and summarize changed files, test results, and known limitations.
 
 ## Language
