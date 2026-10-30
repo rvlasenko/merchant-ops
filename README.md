@@ -9,7 +9,7 @@ Stack: Laravel 13 (PHP 8.3), PostgreSQL 16, Docker. Docker is the only local req
 ```sh
 cp .env.example .env   # set POSTGRES_PASSWORD
 docker compose up -d
-docker compose exec backend php artisan migrate
+docker compose exec backend php artisan migrate --seed
 ```
 
 The root `.env` holds the PostgreSQL credentials; `docker-compose.yml` passes them to both `db` and `backend`.
@@ -24,6 +24,16 @@ curl http://localhost:8000/api/health
 ```
 
 `timestamp` is the current server time in ISO 8601. If the database is unreachable, the endpoint returns `503` with `{"status":"error","database":"unavailable","timestamp":"..."}`.
+
+## Demo data
+
+`migrate --seed` in Getting started fills an empty database with a fixed data set: 20 pending orders `MO-0001` … `MO-0020` and 5 simulated marketplace failures (`MO-0003`, `MO-0005`, `MO-0007`, `MO-0009`, `MO-0011`). The data is the same on every run. Seeding a database that already has these orders fails on the unique order number.
+
+Full reset, only as a last resort — **deletes all data in the main database**:
+
+```sh
+docker compose exec backend php artisan migrate:fresh --seed
+```
 
 ## Tests
 
