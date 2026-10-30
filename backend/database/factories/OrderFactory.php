@@ -22,7 +22,7 @@ class OrderFactory extends Factory
         $n = ++self::$counter;
 
         return [
-            'number' => sprintf('MO-%04d', $n),
+            'number' => sprintf('TEST-%04d', $n),
             'customer_name' => "Customer {$n}",
             'total_cents' => 1000 * $n + 99,
             'currency' => 'EUR',
