@@ -5,11 +5,16 @@ namespace App\Models;
 use App\Enums\AttemptResult;
 use App\Enums\AttemptTrigger;
 use App\Enums\SyncErrorCode;
+use Database\Factories\SyncAttemptFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SyncAttempt extends Model
 {
+    /** @use HasFactory<SyncAttemptFactory> */
+    use HasFactory;
+
     // Attempts are an append-only log: there is no updated_at column.
     const UPDATED_AT = null;
 

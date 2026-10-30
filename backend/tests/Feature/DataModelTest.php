@@ -23,101 +23,115 @@ class DataModelTest extends TestCase
 
     public function test_duplicate_order_number_is_rejected(): void
     {
-        $this->insertOrder(['number' => 'MO-0001']);
+        Order::factory()->create(['number' => 'MO-0001']);
 
         $this->expectException(UniqueConstraintViolationException::class);
-        $this->insertOrder(['number' => 'MO-0001']);
+        Order::factory()->create(['number' => 'MO-0001']);
+    }
+
+    public function test_factory_generates_unique_order_numbers(): void
+    {
+        $orders = Order::factory()->count(3)->create();
+
+        $this->assertCount(3, $orders->pluck('number')->unique());
     }
 
     public function test_second_simulation_for_the_same_order_is_rejected(): void
     {
-        $orderId = $this->insertOrder();
-        $this->insertSimulation($orderId);
+        $order = Order::factory()->create();
+        SimulatedFailure::factory()->for($order)->create();
 
         $this->expectException(UniqueConstraintViolationException::class);
-        $this->insertSimulation($orderId);
+        SimulatedFailure::factory()->for($order)->create();
     }
 
     public function test_unknown_sync_status_is_rejected(): void
     {
+        // Raw insert: the enum cast would reject the value before it reaches the database.
         $this->expectException(QueryException::class);
-        $this->insertOrder(['sync_status' => 'unknown']);
+        DB::table('orders')->insert([
+            'number' => 'MO-0001',
+            'customer_name' => 'Ada Lovelace',
+            'total_cents' => 1099,
+            'currency' => 'EUR',
+            'sync_status' => 'unknown',
+        ]);
     }
 
     public function test_negative_total_is_rejected(): void
     {
         $this->expectException(QueryException::class);
-        $this->insertOrder(['total_cents' => -1]);
+        Order::factory()->create(['total_cents' => -1]);
     }
 
     public function test_lowercase_currency_is_rejected(): void
     {
         $this->expectException(QueryException::class);
-        $this->insertOrder(['currency' => 'eur']);
+        Order::factory()->create(['currency' => 'eur']);
     }
 
     public function test_negative_remaining_is_rejected(): void
     {
-        $orderId = $this->insertOrder();
+        $order = Order::factory()->create();
 
         $this->expectException(QueryException::class);
-        $this->insertSimulation($orderId, ['remaining' => -1]);
+        SimulatedFailure::factory()->for($order)->limited(SyncErrorCode::Timeout, -1)->create();
     }
 
     public function test_successful_attempt_with_error_is_rejected(): void
     {
-        $orderId = $this->insertOrder();
+        $order = Order::factory()->create();
 
         $this->expectException(QueryException::class);
-        $this->insertAttempt($orderId, ['result' => 'success', 'error_code' => 'timeout']);
+        SyncAttempt::factory()->for($order)->success()->create(['error_code' => SyncErrorCode::Timeout]);
     }
 
     public function test_failed_attempt_without_error_is_rejected(): void
     {
-        $orderId = $this->insertOrder();
+        $order = Order::factory()->create();
 
         $this->expectException(QueryException::class);
-        $this->insertAttempt($orderId, ['result' => 'failed']);
+        SyncAttempt::factory()->for($order)->create(['result' => AttemptResult::Failed]);
     }
 
     public function test_attempt_for_missing_order_is_rejected(): void
     {
         $this->expectException(QueryException::class);
-        $this->insertAttempt(999999);
+        SyncAttempt::factory()->create(['order_id' => 999999]);
     }
 
     public function test_deleting_order_deletes_attempts_and_simulation(): void
     {
-        $orderId = $this->insertOrder();
-        $otherOrderId = $this->insertOrder(['number' => 'MO-0002']);
-        $this->insertAttempt($orderId);
-        $this->insertAttempt($orderId, $this->failedAttempt(SyncErrorCode::Timeout));
-        $this->insertAttempt($otherOrderId);
-        $this->insertSimulation($orderId);
+        $order = Order::factory()->create();
+        $otherOrder = Order::factory()->create();
+        SyncAttempt::factory()->for($order)->success()->create();
+        SyncAttempt::factory()->for($order)->failed(SyncErrorCode::Timeout)->create();
+        SyncAttempt::factory()->for($otherOrder)->success()->create();
+        SimulatedFailure::factory()->for($order)->create();
 
-        DB::table('orders')->where('id', $orderId)->delete();
+        // Delete through the query builder to check the database-level cascade.
+        DB::table('orders')->where('id', $order->id)->delete();
 
-        $this->assertSame(0, DB::table('sync_attempts')->where('order_id', $orderId)->count());
-        $this->assertSame(0, DB::table('simulated_failures')->where('order_id', $orderId)->count());
-        $this->assertSame(1, DB::table('sync_attempts')->where('order_id', $otherOrderId)->count());
+        $this->assertSame(0, DB::table('sync_attempts')->where('order_id', $order->id)->count());
+        $this->assertSame(0, DB::table('simulated_failures')->where('order_id', $order->id)->count());
+        $this->assertSame(1, DB::table('sync_attempts')->where('order_id', $otherOrder->id)->count());
     }
 
     public function test_every_enum_value_is_accepted_by_its_column(): void
     {
-        foreach (SyncStatus::cases() as $i => $status) {
-            $this->insertOrder(['number' => "MO-S{$i}", 'sync_status' => $status->value]);
+        foreach (SyncStatus::cases() as $status) {
+            Order::factory()->create(['sync_status' => $status]);
         }
 
-        $orderId = $this->insertOrder();
+        $order = Order::factory()->create();
         foreach (AttemptTrigger::cases() as $trigger) {
-            $this->insertAttempt($orderId, ['trigger' => $trigger->value]);
+            SyncAttempt::factory()->for($order)->success()->create(['trigger' => $trigger]);
         }
-        $this->insertAttempt($orderId, ['result' => AttemptResult::Success->value]);
 
-        foreach (SyncErrorCode::cases() as $i => $code) {
-            $codeOrderId = $this->insertOrder(['number' => "MO-E{$i}", 'last_error_code' => $code->value]);
-            $this->insertAttempt($codeOrderId, $this->failedAttempt($code));
-            $this->insertSimulation($codeOrderId, ['error_code' => $code->value]);
+        foreach (SyncErrorCode::cases() as $code) {
+            $codeOrder = Order::factory()->create(['last_error_code' => $code]);
+            SyncAttempt::factory()->for($codeOrder)->failed($code)->create();
+            SimulatedFailure::factory()->for($codeOrder)->always($code)->create();
         }
 
         $this->assertSame(count(SyncErrorCode::cases()), DB::table('simulated_failures')->count());
@@ -125,11 +139,9 @@ class DataModelTest extends TestCase
 
     public function test_models_cast_enum_columns(): void
     {
-        $order = $this->createOrder(['last_error_code' => SyncErrorCode::Timeout]);
-        $order->syncAttempts()->create($this->failedAttempt(SyncErrorCode::Timeout) + [
-            'trigger' => AttemptTrigger::Initial,
-        ]);
-        $order->simulatedFailure()->create(['error_code' => SyncErrorCode::Unavailable, 'remaining' => 2]);
+        $order = Order::factory()->create(['last_error_code' => SyncErrorCode::Timeout]);
+        SyncAttempt::factory()->for($order)->failed(SyncErrorCode::Timeout)->create();
+        SimulatedFailure::factory()->for($order)->limited(SyncErrorCode::Unavailable, 2)->create();
 
         $order = Order::findOrFail($order->id);
         $attempt = SyncAttempt::firstOrFail();
@@ -149,10 +161,7 @@ class DataModelTest extends TestCase
 
     public function test_sync_attempt_has_no_updated_at(): void
     {
-        $attempt = $this->createOrder()->syncAttempts()->create([
-            'trigger' => AttemptTrigger::Initial,
-            'result' => AttemptResult::Success,
-        ]);
+        $attempt = SyncAttempt::factory()->create();
 
         $this->assertNotNull($attempt->created_at);
         $this->assertArrayNotHasKey('updated_at', $attempt->getAttributes());
@@ -160,11 +169,11 @@ class DataModelTest extends TestCase
 
     public function test_model_relations_return_expected_types(): void
     {
-        $order = $this->createOrder();
-        $withoutSimulation = $this->createOrder(['number' => 'MO-0002']);
-        $order->syncAttempts()->create(['trigger' => AttemptTrigger::Initial, 'result' => AttemptResult::Success]);
-        $order->syncAttempts()->create(['trigger' => AttemptTrigger::Retry, 'result' => AttemptResult::Success]);
-        $order->simulatedFailure()->create(['error_code' => SyncErrorCode::Timeout]);
+        $order = Order::factory()->create();
+        $withoutSimulation = Order::factory()->create();
+        SyncAttempt::factory()->for($order)->success()->create();
+        SyncAttempt::factory()->for($order)->success()->create(['trigger' => AttemptTrigger::Retry]);
+        SimulatedFailure::factory()->for($order)->create();
 
         $order->refresh();
 
@@ -179,64 +188,14 @@ class DataModelTest extends TestCase
 
     public function test_deleting_order_model_deletes_attempts_and_simulation(): void
     {
-        $order = $this->createOrder();
-        $order->syncAttempts()->create(['trigger' => AttemptTrigger::Initial, 'result' => AttemptResult::Success]);
-        $order->syncAttempts()->create($this->failedAttempt(SyncErrorCode::Timeout) + [
-            'trigger' => AttemptTrigger::Retry,
-        ]);
-        $order->simulatedFailure()->create(['error_code' => SyncErrorCode::Timeout]);
+        $order = Order::factory()->create();
+        SyncAttempt::factory()->for($order)->success()->create();
+        SyncAttempt::factory()->for($order)->failed(SyncErrorCode::Timeout)->create(['trigger' => AttemptTrigger::Retry]);
+        SimulatedFailure::factory()->for($order)->create();
 
         $order->delete();
 
         $this->assertSame(0, SyncAttempt::where('order_id', $order->id)->count());
         $this->assertSame(0, SimulatedFailure::where('order_id', $order->id)->count());
-    }
-
-    private function createOrder(array $overrides = []): Order
-    {
-        return Order::create($overrides + [
-            'number' => 'MO-0001',
-            'customer_name' => 'Ada Lovelace',
-            'total_cents' => 1099,
-            'currency' => 'EUR',
-        ]);
-    }
-
-    private function insertOrder(array $overrides = []): int
-    {
-        return DB::table('orders')->insertGetId($overrides + [
-            'number' => 'MO-0001',
-            'customer_name' => 'Ada Lovelace',
-            'total_cents' => 1099,
-            'currency' => 'EUR',
-        ]);
-    }
-
-    private function insertAttempt(int $orderId, array $overrides = []): void
-    {
-        DB::table('sync_attempts')->insert($overrides + [
-            'order_id' => $orderId,
-            'trigger' => AttemptTrigger::Initial->value,
-            'result' => AttemptResult::Success->value,
-        ]);
-    }
-
-    private function insertSimulation(int $orderId, array $overrides = []): void
-    {
-        DB::table('simulated_failures')->insert($overrides + [
-            'order_id' => $orderId,
-            'error_code' => SyncErrorCode::Timeout->value,
-            'remaining' => null,
-        ]);
-    }
-
-    private function failedAttempt(SyncErrorCode $code): array
-    {
-        return [
-            'result' => AttemptResult::Failed->value,
-            'error_code' => $code->value,
-            'error_message' => $code->message(),
-            'retryable' => $code->retryable(),
-        ];
     }
 }

@@ -3,11 +3,16 @@
 namespace App\Models;
 
 use App\Enums\SyncErrorCode;
+use Database\Factories\SimulatedFailureFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SimulatedFailure extends Model
 {
+    /** @use HasFactory<SimulatedFailureFactory> */
+    use HasFactory;
+
     protected $fillable = [
         'order_id',
         'error_code',
