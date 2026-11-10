@@ -90,7 +90,7 @@ docker compose exec backend php artisan migrate:fresh --seed
 docker compose exec backend php artisan test
 ```
 
-Tests use a separate `merchantops_test` database. It is created by the script in `docker/postgres/init/` on the first start of an empty PostgreSQL volume, so after changing credentials in `.env` recreate the volume with `docker compose down -v`.
+Tests use a separate `merchantops_test` database. It is created by the script in `docker/postgres/init/` on the first start of an empty PostgreSQL volume, so after changing credentials in `.env` recreate the volume with `docker compose down -v` — **this deletes all data in the main database**.
 
 ## Services
 
@@ -100,4 +100,4 @@ Tests use a separate `merchantops_test` database. It is created by the script in
 | `backend` | 8000 | Laravel API (`php artisan serve`) |
 
 PostgreSQL data (`pgdata`) and `vendor/` (`vendor`) live in named volumes and survive `docker compose down`.
-Full reset: `docker compose down -v`.
+Full reset, only as a last resort — **deletes all data in the main database and the `vendor` volume**: `docker compose down -v`.
