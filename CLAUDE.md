@@ -12,6 +12,9 @@ See `README.md` for setup, commands and services. Do not duplicate them here.
 - Do not refactor unrelated code without asking.
 - When functionality changes, check which related documents (`README.md`, `docs/specs/`) need updating and list them in the summary. Do not rewrite them automatically unless necessary.
 - After implementation, run relevant tests and summarize changed files, test results, and known limitations.
+- Write tests first: each acceptance criterion gets a failing test before the code that makes it pass, including migrations.
+- A new test must fail on its assertion, not on a syntax or setup error.
+- Do not change a test to fit the code without saying why.
 
 ## Language
 
