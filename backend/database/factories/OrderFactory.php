@@ -27,7 +27,7 @@ class OrderFactory extends Factory
             'total_cents' => 1000 * $n + 99,
             'currency' => 'EUR',
             'sync_status' => SyncStatus::Pending,
-            'marketplace_order_id' => null,
+            'external_order_id' => null,
             'last_error_code' => null,
             'attempts_count' => 0,
             'last_attempt_at' => null,

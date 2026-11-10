@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
     ];
 
     /**
-     * Simulated marketplace failures: order number => [error code, remaining].
+     * Simulated external service failures: order number => [error code, remaining].
      * A null remaining means the order fails forever.
      */
     private const SIMULATIONS = [

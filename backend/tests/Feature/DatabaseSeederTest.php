@@ -52,7 +52,7 @@ class DatabaseSeederTest extends TestCase
         return DB::table('orders')
             ->orderBy('number')
             ->get(['number', 'customer_name', 'total_cents', 'currency', 'sync_status',
-                'marketplace_order_id', 'last_error_code', 'attempts_count', 'last_attempt_at'])
+                'external_order_id','last_error_code', 'attempts_count', 'last_attempt_at'])
             ->map(fn ($row) => (array) $row)
             ->all();
     }

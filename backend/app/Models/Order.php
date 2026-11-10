@@ -21,7 +21,7 @@ class Order extends Model
         'total_cents',
         'currency',
         'sync_status',
-        'marketplace_order_id',
+        'external_order_id',
         'last_error_code',
         'attempts_count',
         'last_attempt_at',

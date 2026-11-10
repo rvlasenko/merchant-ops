@@ -13,11 +13,11 @@ enum SyncErrorCode: string
     public function message(): string
     {
         return match ($this) {
-            self::Timeout => 'Marketplace did not respond in time.',
-            self::Unavailable => 'Marketplace is temporarily unavailable.',
-            self::RateLimited => 'Too many requests to the marketplace.',
-            self::ValidationFailed => 'Marketplace rejected the order data.',
-            self::Unauthorized => 'Marketplace credentials were rejected.',
+            self::Timeout => 'External service did not respond in time.',
+            self::Unavailable => 'External service is temporarily unavailable.',
+            self::RateLimited => 'Too many requests to the external service.',
+            self::ValidationFailed => 'External service rejected the order data.',
+            self::Unauthorized => 'External service credentials were rejected.',
         };
     }
 
