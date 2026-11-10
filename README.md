@@ -1,6 +1,8 @@
 # MerchantOps
 
-A learning project: a diagnostics service for order synchronization with an external marketplace. The marketplace is simulated inside the application.
+A learning project for practicing AI-assisted development and backend engineering: a diagnostics service for sending orders to an external order-processing service. The external service is simulated inside the application. MerchantOps is not an ERP or fulfillment system.
+
+**In one picture.** Think of sending letters through a post office. Each order is a letter; the external service is the post office. Sometimes the post office refuses a letter: "too busy, come back later", "the address is wrong", "you have no contract with us". MerchantOps is the notebook where you record every trip to the post office — when you went, what they said, and whether going again makes sense — plus a button to try again. "Too busy" is worth retrying; "wrong address" is not, until someone fixes the address.
 
 Stack: Laravel 13 (PHP 8.3), PostgreSQL 16, Docker. Docker is the only local requirement. A React frontend is planned.
 
@@ -8,7 +10,9 @@ Stack: Laravel 13 (PHP 8.3), PostgreSQL 16, Docker. Docker is the only local req
 
 ### Problem
 
-A shop sends its orders to a marketplace. Some orders fail to sync: the marketplace times out, is unavailable, rate-limits requests, rejects the order data or rejects the credentials. An operator needs to see which orders are stuck, why, whether a retry can help, and what happened on every previous attempt.
+Orders already exist in MerchantOps and are sent to an external service that processes them. Some transfers fail: the external service times out, is unavailable, rate-limits requests, rejects the order data or rejects the credentials. An operator needs to see which orders are stuck, why, whether a retry can help, and what happened on every previous attempt.
+
+The project covers only the transfer and its result. What the external service does with an order (warehouse, shipping, delivery), status updates coming back from it, and order line items are out of scope.
 
 ### What the service does
 
@@ -23,13 +27,13 @@ Only the data model exists today; see [Status](#status).
 
 ### Key concepts
 
-- **Order** — a shop order with its current sync state: status, last error, number of attempts, marketplace order ID after a successful sync.
-- **Sync attempt** — one try to send an order to the marketplace. Attempts form an append-only log: rows are added, never changed, so the history stays accurate.
-- **Simulated failure** — per-order setting of the simulated marketplace: which error to return and how many more times (or forever).
+- **Order** — an order with its current sync state: status, last error, number of attempts, external order ID after a successful sync.
+- **Sync attempt** — one try to send an order to the external service. Attempts form an append-only log: rows are added, never changed, so the history stays accurate.
+- **Simulated failure** — per-order setting of the simulated external service: which error to return and how many more times (or forever).
 
 ### Deterministic failure simulation
 
-There is no real marketplace. Whether a sync attempt fails is decided only by the order's simulated failure setting, never by randomness. The same data always gives the same result, so every scenario can be reproduced by hand and in tests. This is why the demo data ties failures to specific orders (see [Demo data](#demo-data)).
+There is no real external service. Whether a sync attempt fails is decided only by the order's simulated failure setting, never by randomness. The same data always gives the same result, so every scenario can be reproduced by hand and in tests. This is why the demo data ties failures to specific orders (see [Demo data](#demo-data)).
 
 ### Learning goals
 
@@ -72,7 +76,7 @@ curl http://localhost:8000/api/health
 
 ## Demo data
 
-`migrate --seed` in Getting started fills an empty database with a fixed data set: 20 pending orders `MO-0001` … `MO-0020` and 5 simulated marketplace failures (`MO-0003`, `MO-0005`, `MO-0007`, `MO-0009`, `MO-0011`). The data is the same on every run. Seeding a database that already has these orders fails on the unique order number.
+`migrate --seed` in Getting started fills an empty database with a fixed data set: 20 pending orders `MO-0001` … `MO-0020` and 5 simulated external service failures (`MO-0003`, `MO-0005`, `MO-0007`, `MO-0009`, `MO-0011`). The data is the same on every run. Seeding a database that already has these orders fails on the unique order number.
 
 Full reset, only as a last resort — **deletes all data in the main database**:
 
