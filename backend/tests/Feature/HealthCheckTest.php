@@ -21,6 +21,12 @@ class HealthCheckTest extends TestCase
         ]);
     }
 
+    public function test_laravel_default_health_route_is_not_registered(): void
+    {
+        // /api/health is the only health endpoint.
+        $this->get('/up')->assertNotFound();
+    }
+
     public function test_tests_run_against_separate_database(): void
     {
         $this->assertSame('merchantops_test', DB::connection()->getDatabaseName());
