@@ -70,6 +70,39 @@ class DataModelTest extends TestCase
         Order::factory()->create(['currency' => 'eur']);
     }
 
+    public function test_synced_order_without_external_id_is_rejected(): void
+    {
+        $this->expectException(QueryException::class);
+        Order::factory()->create(['sync_status' => SyncStatus::Synced, 'external_order_id' => null]);
+    }
+
+    public function test_failed_order_with_external_id_is_rejected(): void
+    {
+        $this->expectException(QueryException::class);
+        Order::factory()->create(['sync_status' => SyncStatus::Failed, 'external_order_id' => 'EXT-1']);
+    }
+
+    public function test_pending_order_with_external_id_is_rejected(): void
+    {
+        $this->expectException(QueryException::class);
+        Order::factory()->create(['sync_status' => SyncStatus::Pending, 'external_order_id' => 'EXT-1']);
+    }
+
+    public function test_synced_factory_state_sets_external_id_from_number(): void
+    {
+        $order = Order::factory()->synced()->create();
+
+        $this->assertSame(SyncStatus::Synced, $order->refresh()->sync_status);
+        $this->assertSame("EXT-{$order->number}", $order->external_order_id);
+    }
+
+    public function test_synced_factory_state_uses_number_passed_to_create(): void
+    {
+        $order = Order::factory()->synced()->create(['number' => 'MO-0001']);
+
+        $this->assertSame('EXT-MO-0001', $order->refresh()->external_order_id);
+    }
+
     public function test_negative_remaining_is_rejected(): void
     {
         $order = Order::factory()->create();
@@ -120,7 +153,11 @@ class DataModelTest extends TestCase
     public function test_every_enum_value_is_accepted_by_its_column(): void
     {
         foreach (SyncStatus::cases() as $status) {
-            Order::factory()->create(['sync_status' => $status]);
+            // The external ID must be set exactly when the order is synced (D3).
+            Order::factory()->create([
+                'sync_status' => $status,
+                'external_order_id' => $status === SyncStatus::Synced ? "EXT-{$status->value}" : null,
+            ]);
         }
 
         $order = Order::factory()->create();

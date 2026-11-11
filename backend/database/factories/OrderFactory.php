@@ -33,4 +33,13 @@ class OrderFactory extends Factory
             'last_attempt_at' => null,
         ];
     }
+
+    public function synced(): static
+    {
+        // The ID is set after making, so it follows a number passed to create().
+        return $this->state(['sync_status' => SyncStatus::Synced])
+            ->afterMaking(function (Order $order) {
+                $order->external_order_id ??= 'EXT-'.$order->number;
+            });
+    }
 }
