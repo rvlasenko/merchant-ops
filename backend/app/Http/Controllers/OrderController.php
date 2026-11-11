@@ -2,27 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\SyncStatus;
+use App\Http\Requests\ListOrdersRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Services\OrderSyncService;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
     private const PER_PAGE = 15;
 
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(ListOrdersRequest $request): AnonymousResourceCollection
     {
-        $validated = $request->validate([
-            // nullable: an empty ?sync_status= means "no filter".
-            'sync_status' => ['sometimes', 'nullable', Rule::enum(SyncStatus::class)],
-        ]);
-
         $orders = Order::query()
-            ->when($validated['sync_status'] ?? null, fn ($query, $status) => $query->where('sync_status', $status))
+            ->when($request->syncStatus(), fn ($query, $status) => $query->where('sync_status', $status))
             ->orderBy('id')
             ->paginate(self::PER_PAGE)
             // Keep the status filter in pagination links.
