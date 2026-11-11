@@ -1,5 +1,7 @@
 # MerchantOps
 
+[![CI](https://github.com/rvlasenko/merchant-ops/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rvlasenko/merchant-ops/actions/workflows/ci.yml)
+
 A learning project for practicing AI-assisted development and backend engineering: a service that syncs orders to an external order-processing service and records the result of every sync. The external service is simulated inside the application. MerchantOps is not an ERP or fulfillment system.
 
 **In one picture.** Think of sending letters through a post office. Each order is a letter; the external service is the post office. Sometimes the post office refuses a letter: "too busy, come back later", "the address is wrong", "you have no contract with us". MerchantOps is the notebook where you record every trip to the post office — when you went, what they said, and whether going again makes sense — plus a button to try again. "Too busy" is worth retrying; "wrong address" is not, until someone fixes the address.
@@ -134,6 +136,22 @@ docker compose exec backend php artisan test
 ```
 
 Tests use a separate `merchantops_test` database. It is created by the script in `docker/postgres/init/` on the first start of an empty PostgreSQL volume, so after changing credentials in `.env` recreate the volume with `docker compose down -v` — **this deletes all data in the main database**.
+
+Code style is checked with [Laravel Pint](https://laravel.com/docs/pint) (config: `backend/pint.json`):
+
+```sh
+docker compose exec backend composer lint     # check only
+docker compose exec backend composer format   # fix in place
+```
+
+### CI
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to `main` and every pull request:
+
+- **Backend** — Pint, then `php artisan test` against a PostgreSQL 16 service container with only the `merchantops_test` database.
+- **Frontend** — `npm ci`, `lint`, `typecheck`, `test`, `build`.
+
+Composer and npm downloads are cached between runs, keyed by the lock files.
 
 ## Services
 

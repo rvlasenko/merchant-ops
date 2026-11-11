@@ -10,8 +10,8 @@ use App\Models\SimulatedFailure;
 use App\Models\SyncAttempt;
 use App\Services\OrderSyncService;
 use Carbon\CarbonImmutable;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
