@@ -9,7 +9,7 @@ const labels: Record<Status, string> = {
   unavailable: 'unavailable',
 }
 
-/** Health of the browser → proxy → backend → database chain (spec 2.1, §5.1). */
+/** Whether the page reaches the API and the API reaches the database (spec 2.1, §5.1). */
 export function ApiStatus() {
   const [status, setStatus] = useState<Status>('loading')
 

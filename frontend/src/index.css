@@ -24,3 +24,57 @@ body {
   margin: 0;
   color: #6b6375;
 }
+
+main {
+  padding: 16px 24px;
+}
+
+.filter select {
+  font: inherit;
+}
+
+.order-list table {
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.order-list th,
+.order-list td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #e5e4e7;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.order-list th {
+  color: #6b6375;
+  font-weight: 600;
+}
+
+.order-list td.number {
+  text-align: right;
+}
+
+.status-synced {
+  color: #1a7f37;
+}
+
+.status-failed {
+  color: #c62828;
+}
+
+.error {
+  color: #c62828;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.pagination button {
+  font: inherit;
+}
