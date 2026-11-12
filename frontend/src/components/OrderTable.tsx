@@ -8,6 +8,8 @@ type Props = {
   page: number
   onFilterChange: (status: SyncStatus | null) => void
   onPageChange: (page: number) => void
+  selectedId: number | null
+  onSelect: (id: number) => void
 }
 
 type Result =
@@ -17,7 +19,14 @@ type Result =
 const statuses: SyncStatus[] = ['pending', 'synced', 'failed']
 
 /** Order list with status filter and pagination (spec 2.1, §5.2, §5.4, §5.6). */
-export function OrderTable({ status, page, onFilterChange, onPageChange }: Props) {
+export function OrderTable({
+  status,
+  page,
+  onFilterChange,
+  onPageChange,
+  selectedId,
+  onSelect,
+}: Props) {
   // The result remembers which request it answers. A result for other props
   // is not current, so the component shows Loading… instead of old rows.
   const key = `${status ?? ''}|${page}`
@@ -67,7 +76,11 @@ export function OrderTable({ status, page, onFilterChange, onPageChange }: Props
       )}
       {current?.kind === 'loaded' && (
         <>
-          {current.list.data.length === 0 ? <p>No orders</p> : <Table orders={current.list.data} />}
+          {current.list.data.length === 0 ? (
+            <p>No orders</p>
+          ) : (
+            <Table orders={current.list.data} selectedId={selectedId} onSelect={onSelect} />
+          )}
           <Pagination
             currentPage={current.list.meta.current_page}
             lastPage={current.list.meta.last_page}
@@ -79,7 +92,17 @@ export function OrderTable({ status, page, onFilterChange, onPageChange }: Props
   )
 }
 
-function Table({ orders }: { orders: Order[] }) {
+type TableProps = {
+  orders: Order[]
+  selectedId: number | null
+  onSelect: (id: number) => void
+}
+
+/**
+ * Clicking a row selects the order (§5.2). The number is also a button, so
+ * the order can be selected from the keyboard; its click bubbles to the row.
+ */
+function Table({ orders, selectedId, onSelect }: TableProps) {
   return (
     <table>
       <thead>
@@ -95,8 +118,17 @@ function Table({ orders }: { orders: Order[] }) {
       </thead>
       <tbody>
         {orders.map((order) => (
-          <tr key={order.id}>
-            <td>{order.number}</td>
+          <tr
+            key={order.id}
+            className={order.id === selectedId ? 'selected' : undefined}
+            aria-current={order.id === selectedId ? 'true' : undefined}
+            onClick={() => onSelect(order.id)}
+          >
+            <td>
+              <button type="button" className="row-select">
+                {order.number}
+              </button>
+            </td>
             <td>{order.customer_name}</td>
             <td className="number">{formatMoney(order.total_cents, order.currency)}</td>
             <td>

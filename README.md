@@ -6,7 +6,7 @@ A learning project for practicing AI-assisted development and backend engineerin
 
 **In one picture.** Think of sending letters through a post office. Each order is a letter; the external service is the post office. Sometimes the post office refuses a letter: "too busy, come back later", "the address is wrong", "you have no contract with us". MerchantOps is the notebook where you record every trip to the post office — when you went, what they said, and whether going again makes sense — plus a button to try again. "Too busy" is worth retrying; "wrong address" is not, until someone fixes the address.
 
-Stack: Laravel 13 (PHP 8.3), PostgreSQL 16, Docker. Docker is the only local requirement. A React frontend is planned.
+Stack: Laravel 13 (PHP 8.3), PostgreSQL 16, React + TypeScript (Vite), Docker. Docker is the only local requirement.
 
 ## About
 
@@ -25,7 +25,7 @@ MerchantOps lets an operator:
 - tell whether an error is retryable (`timeout`, `unavailable`, `rate_limited`) or not (`validation_failed`, `unauthorized`);
 - retry the sync of an order.
 
-Today this works through the JSON [API](#api); a React UI is planned. See [Status](#status).
+A read-only React page at `http://localhost:5173` shows orders, their sync state and attempt log. Syncing, retrying and changing the simulation still go through the JSON [API](#api). See [Status](#status).
 
 ### Key concepts
 
@@ -45,7 +45,8 @@ There is no real external service. Whether a sync attempt fails is decided only 
 | 1.1 | Infrastructure, `GET /api/health` | done |
 | 1.2 | Data model: migrations, enums, models, factories, seeder | done |
 | 1.3 | Sync logic, controllers, API | done |
-| — | React frontend | planned |
+| 2.1 | Read-only React UI: API status, order table with filter and pagination, order detail with attempt log | done |
+| 3 | UI actions: sync, retry, simulated failure | planned |
 
 Specifications live in [`docs/specs/`](docs/specs/).
 
@@ -67,6 +68,8 @@ Check:
 curl http://localhost:8000/api/health
 # {"status":"ok","database":"ok","timestamp":"2026-01-01T12:00:00+00:00"}
 ```
+
+Open the UI at `http://localhost:5173`. On start the `frontend` container runs `npm install` and the Vite dev server; the first start takes longer. The page only reads data. Vite forwards `/api` to the backend, so `curl localhost:5173/api/health` returns the same JSON as above.
 
 `timestamp` is the current server time in ISO 8601. If the database is unreachable, the endpoint returns `503` with `{"status":"error","database":"unavailable","timestamp":"..."}`.
 
@@ -135,7 +138,15 @@ docker compose exec backend php artisan migrate:fresh --seed
 docker compose exec backend php artisan test
 ```
 
-Tests use a separate `merchantops_test` database. It is created by the script in `docker/postgres/init/` on the first start of an empty PostgreSQL volume, so after changing credentials in `.env` recreate the volume with `docker compose down -v` — **this deletes all data in the main database**.
+Backend tests use a separate `merchantops_test` database. It is created by the script in `docker/postgres/init/` on the first start of an empty PostgreSQL volume, so after changing credentials in `.env` recreate the volume with `docker compose down -v` — **this deletes all data in the main database**.
+
+Frontend tests (Vitest; `fetch` is stubbed, so they reach neither the backend nor a database), type check and lint:
+
+```sh
+docker compose exec frontend npm test
+docker compose exec frontend npm run typecheck
+docker compose exec frontend npm run lint
+```
 
 Code style is checked with [Laravel Pint](https://laravel.com/docs/pint) (config: `backend/pint.json`):
 
@@ -165,6 +176,7 @@ Composer and npm downloads are cached between runs, keyed by the lock files.
 |---|---|---|
 | `db` | 5432 | PostgreSQL, credentials from the root `.env` |
 | `backend` | 8000 | Laravel API (`php artisan serve`) |
+| `frontend` | 5173 | React UI, Vite dev server; proxies `/api` to `backend` |
 
-PostgreSQL data (`pgdata`) and `vendor/` (`vendor`) live in named volumes and survive `docker compose down`.
-Full reset, only as a last resort — **deletes all data in the main database and the `vendor` volume**: `docker compose down -v`.
+PostgreSQL data (`pgdata`), `vendor/` (`vendor`) and `node_modules/` (`node_modules`) live in named volumes and survive `docker compose down`.
+Full reset, only as a last resort — **deletes all data in the main database and the `vendor` and `node_modules` volumes**: `docker compose down -v`.

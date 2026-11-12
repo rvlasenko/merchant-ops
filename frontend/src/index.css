@@ -78,3 +78,88 @@ main {
 .pagination button {
   font: inherit;
 }
+
+.layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.order-list tbody tr {
+  cursor: pointer;
+}
+
+.order-list tbody tr:hover {
+  background: #f6f5f8;
+}
+
+.order-list tbody tr.selected {
+  background: #ece9f5;
+}
+
+.row-select {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.order-detail {
+  flex: 1;
+  min-width: 320px;
+  padding: 0 16px 16px;
+  border: 1px solid #e5e4e7;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.order-detail .close {
+  float: right;
+  margin-top: 12px;
+  font: inherit;
+}
+
+.order-detail h2 {
+  font-size: 18px;
+}
+
+.order-detail h3 {
+  font-size: 15px;
+  margin-top: 20px;
+}
+
+.order-detail dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 0;
+}
+
+.order-detail dt {
+  color: #6b6375;
+}
+
+.order-detail dd {
+  margin: 0;
+}
+
+.order-detail table {
+  border-collapse: collapse;
+}
+
+.order-detail th,
+.order-detail td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #e5e4e7;
+  text-align: left;
+  vertical-align: top;
+}
+
+.order-detail th {
+  color: #6b6375;
+  font-weight: 600;
+  white-space: nowrap;
+}

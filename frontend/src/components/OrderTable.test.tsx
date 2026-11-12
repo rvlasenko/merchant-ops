@@ -11,18 +11,21 @@ import {
 } from '../test/fixtures.ts'
 import { OrderTable } from './OrderTable.tsx'
 
-function renderTable(status: SyncStatus | null = null, page = 1) {
+function renderTable(status: SyncStatus | null = null, page = 1, selectedId: number | null = null) {
   const onFilterChange = vi.fn()
   const onPageChange = vi.fn()
+  const onSelect = vi.fn()
   render(
     <OrderTable
       status={status}
       page={page}
       onFilterChange={onFilterChange}
       onPageChange={onPageChange}
+      selectedId={selectedId}
+      onSelect={onSelect}
     />,
   )
-  return { onFilterChange, onPageChange }
+  return { onFilterChange, onPageChange, onSelect }
 }
 
 function rowCells(number: string): string[] {
@@ -143,6 +146,39 @@ describe('OrderTable', () => {
 
     await userEvent.selectOptions(filter, 'All')
     expect(onFilterChange).toHaveBeenLastCalledWith(null)
+  })
+
+  it('reports the clicked order', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(ordersPage1)))
+
+    const { onSelect } = renderTable()
+    await screen.findByText('MO-0003')
+
+    await userEvent.click(screen.getByRole('row', { name: /MO-0003/ }))
+
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith(3)
+  })
+
+  it('selects an order from the keyboard', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(ordersPage1)))
+
+    const { onSelect } = renderTable()
+    await screen.findByText('MO-0009')
+
+    screen.getByRole('button', { name: 'MO-0009' }).focus()
+    await userEvent.keyboard('{Enter}')
+
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith(9)
+  })
+
+  it('highlights the selected order only', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(ordersPage1)))
+
+    renderTable(null, 1, 3)
+    await screen.findByText('MO-0003')
+
+    expect(screen.getByRole('row', { name: /MO-0003/ })).toHaveAttribute('aria-current', 'true')
+    expect(screen.getByRole('row', { name: /MO-0001/ })).not.toHaveAttribute('aria-current')
   })
 
   it('shows loading while the list request is pending', () => {

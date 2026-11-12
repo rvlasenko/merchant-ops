@@ -31,6 +31,35 @@ export type Order = {
   last_attempt_at: string | null
 }
 
+/** Mirrors backend `App\Enums\AttemptTrigger`. */
+export type AttemptTrigger = 'initial' | 'retry'
+
+/** Mirrors backend `App\Enums\AttemptResult`. */
+export type AttemptResult = 'success' | 'failed'
+
+/** Demo setting of the simulated external service; `remaining: null` = always (1.3 §6.3). */
+export type SimulatedFailure = {
+  error_code: SyncErrorCode
+  remaining: number | null
+}
+
+/** One entry of the attempt log; message and retryable are snapshots (1.3 §6.3). */
+export type SyncAttempt = {
+  id: number
+  trigger: AttemptTrigger
+  result: AttemptResult
+  error_code: SyncErrorCode | null
+  error_message: string | null
+  retryable: boolean | null
+  created_at: string
+}
+
+/** Order with its simulation and attempts, newest first (1.3 §6.3). */
+export type OrderDetail = Order & {
+  simulated_failure: SimulatedFailure | null
+  attempts: SyncAttempt[]
+}
+
 /**
  * Paginated order list (1.3 §6.2). Only the fields the client reads are
  * typed: `links` and `meta.links` are absolute URLs for the backend's own

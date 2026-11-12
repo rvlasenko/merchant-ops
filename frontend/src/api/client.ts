@@ -1,4 +1,4 @@
-import type { Health, OrderList, SyncStatus } from './types.ts'
+import type { Health, OrderDetail, OrderList, SyncStatus } from './types.ts'
 
 // The only place that calls fetch (spec 2.1, §6.1). Paths are relative, so the
 // API must be served from the same origin as the page: in development the Vite
@@ -66,4 +66,10 @@ export function getOrders(
   query.set('page', String(page))
 
   return get<OrderList>(`/api/orders?${query}`, signal)
+}
+
+/** Order with its simulation and attempts; unwraps the resource `data` (1.3 §6.3). */
+export async function getOrder(id: number, signal?: AbortSignal): Promise<OrderDetail> {
+  const body = await get<{ data: OrderDetail }>(`/api/orders/${id}`, signal)
+  return body.data
 }
