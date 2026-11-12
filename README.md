@@ -144,11 +144,17 @@ docker compose exec backend composer lint     # check only
 docker compose exec backend composer format   # fix in place
 ```
 
+Static analysis uses [Larastan](https://github.com/larastan/larastan) (PHPStan for Laravel) at level 6 over `app`, `database`, `routes` and `tests` (config: `backend/phpstan.neon`):
+
+```sh
+docker compose exec backend composer analyse
+```
+
 ### CI
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to `main` and every pull request:
 
-- **Backend** — Pint, then `php artisan test` against a PostgreSQL 16 service container with only the `merchantops_test` database.
+- **Backend** — Pint, Larastan, then `php artisan test` against a PostgreSQL 16 service container with only the `merchantops_test` database.
 - **Frontend** — `npm ci`, `lint`, `typecheck`, `test`, `build`.
 
 Composer and npm downloads are cached between runs, keyed by the lock files.

@@ -47,6 +47,7 @@ class DatabaseSeederTest extends TestCase
         $this->assertSame($first, [$this->orders(), $this->simulations()]);
     }
 
+    /** @return list<array<string, mixed>> */
     private function orders(): array
     {
         return DB::table('orders')
@@ -57,6 +58,7 @@ class DatabaseSeederTest extends TestCase
             ->all();
     }
 
+    /** @return array<string, array{string, int|null}> Keyed by order number: [error_code, remaining]. */
     private function simulations(): array
     {
         return DB::table('simulated_failures')

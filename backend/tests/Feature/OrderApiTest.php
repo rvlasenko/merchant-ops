@@ -318,6 +318,7 @@ class OrderApiTest extends TestCase
             ->assertJsonPath('meta.total', 2);
     }
 
+    /** @param array<string, mixed> $attributes */
     private function failedOrder(SyncErrorCode $code, array $attributes = []): Order
     {
         return Order::factory()->create([

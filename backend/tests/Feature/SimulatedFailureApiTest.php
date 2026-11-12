@@ -90,6 +90,7 @@ class SimulatedFailureApiTest extends TestCase
     }
 
     // C7
+    /** @param array<string, mixed> $payload */
     #[DataProvider('invalidInput')]
     public function test_invalid_put_is_rejected_and_keeps_existing_row(array $payload, string $field): void
     {

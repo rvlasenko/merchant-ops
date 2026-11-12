@@ -1,0 +1,15 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 6
+
+    paths:
+        - app
+        - database
+        - routes
+        - tests
+
+    # Read enum and date casts from the models' casts() method; without it,
+    # Larastan types cast attributes by their database column (e.g. string).
+    parseModelCastsMethod: true

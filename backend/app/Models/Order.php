@@ -38,11 +38,13 @@ class Order extends Model
         ];
     }
 
+    /** @return HasMany<SyncAttempt, $this> */
     public function syncAttempts(): HasMany
     {
         return $this->hasMany(SyncAttempt::class);
     }
 
+    /** @return HasOne<SimulatedFailure, $this> */
     public function simulatedFailure(): HasOne
     {
         return $this->hasOne(SimulatedFailure::class);
